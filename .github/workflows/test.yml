@@ -1,23 +1,31 @@
-name: Check HTML File
+name: Super Linter
 
 on:
   push:
     branches:
-      - main 
+      - main  
 
 jobs:
-  check-html-file:
-    runs-on: ubuntu-latest  
+  lint:
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Check if HTML file exists
-      run: |
-        if [ -f main.html ]; then
-          echo "HTML file exists"
-        else
-          echo "HTML file does not exist"
-          exit 1
-        fi
+      - name: Setup Super Linter
+        uses: github/super-linter@v4
+        with:
+          valid-languages: |
+            javascript
+            python
+            html
+            css
+            json
+            yaml
+            markdown
+            shell
+          exclude: |
+            node_modules/
+            .git/
+          fail-on-warning: false
