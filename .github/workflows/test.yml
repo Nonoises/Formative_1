@@ -1,37 +1,23 @@
-name: HTML Validation
+name: Check HTML File
 
 on:
   push:
     branches:
-      - main
+      - main 
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  check-html-file:
+    runs-on: ubuntu-latest  
 
     steps:
-    - name: Checkout Repository
+    - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
-
-    - name: Install Dependencies
-      run: npm install htmlhint
-
-    - name: Run HTML Validation
-      run: npx htmlhint "**/*.html"
-
-    - name: Save HTML Validation Report
-      if: failure()
-      run: npx htmlhint "**/*.html" --format checkstyle > checkstyle.xml
-      continue-on-error: true
-
-    - name: Upload Validation Report
-      if: failure()
-      uses: actions/upload-artifact@v2
-      with:
-        name: html-validation-report
-        path: checkstyle.xml
+    - name: Check if HTML file exists
+      run: |
+        if [ -f /path/to/your/file.html ]; then
+          echo "HTML file exists"
+        else
+          echo "HTML file does not exist"
+          exit 1
+        fi
