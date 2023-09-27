@@ -15,7 +15,7 @@ jobs:
 
     - name: Check if HTML file exists
       run: |
-        if [ -f /path/to/your/file.html ]; then
+        if [ -f /Formative_1/main.html ]; then
           echo "HTML file exists"
         else
           echo "HTML file does not exist"
