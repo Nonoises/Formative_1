@@ -1,95 +1,59 @@
-name: Publish Images
+---
+#################################
+#################################
+## Super Linter GitHub Actions ##
+#################################
+#################################
+name: Lint Code Base
 
+#############################
+# Start the job on all push #
+#############################
 on:
   push:
-    branches:
-      - main
+    branches-ignore: [master, main]
+    # Remove the line above to run when pushing to master or main
+  pull_request:
+    branches: [master, main]
 
+###############
+# Set the Job #
+###############
 jobs:
-  test:
-    name: Build and Test
+  build:
+    # Name the Job
+    name: Lint Code Base
+    # Set the agent to run on
     runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-main-${{ matrix.images.target }}
-      cancel-in-progress: true
+
+    ############################################
+    # Grant status permission for MULTI_STATUS #
+    ############################################
     permissions:
       contents: read
-      deployments: write
-      issues: write
-      packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        images:
-          - environment: Production-SLIM
-            prefix: slim-
-            target: slim
-          - environment: Production
-            prefix: ""
-            image-id: standard
-    timeout-minutes: 60
+      packages: read
+      statuses: write
+
+    ##################
+    # Load all steps #
+    ##################
     steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Retrieve Datetime
-        run: echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "${GITHUB_ENV}"
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3.0.0
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          # Full git history is needed to get a proper
+          # list of changed files within `super-linter`
+          fetch-depth: 0
 
-      - name: Start ${{ matrix.images.environment }} Deployment
-        uses: bobheadxi/deployments@v1.4.0
-        id: deployment
-        with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: ${{ matrix.images.environment }}
-
-      - name: Build and Push Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          build-args: |
-            BUILD_DATE=${{ env.BUILD_DATE }}
-            BUILD_REVISION=${{ github.sha }}
-            BUILD_VERSION=${{ github.sha }}
-          load: false
-          push: true
-          secrets: |
-            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          tags: |
-            ghcr.io/super-linter/super-linter:${{ matrix.images.prefix }}latest
-          target: "${{ matrix.images.target }}"
-
-      - name: Update ${{ matrix.images.environment }} Deployment
-        uses: bobheadxi/deployments@v1.4.0
-        if: always()
-        with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: ${{ job.status }}
-          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env: ${{ steps.deployment.outputs.env }}
-          env_url: https://github.com/super-linter/super-linter
-
-      - name: Create Issue on Failure
-        uses: actions/github-script@v6
-        if: failure()
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            const create = await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: "Failed to deploy to production",
-              body: "Automation has failed us!\nMore information can be found at:\n - ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-              assignees: [
-                "zkoppert", "Hanse00"
-              ]
-            })
+      ################################
+      # Run Linter against code base #
+      ################################
+      - name: Lint Code Base
+        uses: super-linter/super-linter@v5
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
