@@ -15,17 +15,4 @@ jobs:
 
       - name: Setup Super Linter
         uses: github/super-linter@v4
-        with:
-          valid-languages: |
-            javascript
-            python
-            html
-            css
-            json
-            yaml
-            markdown
-            shell
-          exclude: |
-            node_modules/
-            .git/
-          fail-on-warning: false
+    
